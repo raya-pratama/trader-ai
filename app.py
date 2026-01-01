@@ -6,24 +6,24 @@ import plotly.graph_objects as go
 
 # 1. Konfigurasi Halaman
 st.set_page_config(page_title="AI Trader Sentinel", layout="wide")
-st.title("🤖 AI Trader Sentinel")
+st.title("AI Trader Sentinel")
 
 # 2. Pengelompokan Aset
 kategori_aset = {
-    "Kripto 🪙": {
+    "Kripto": {
         "BTCUSD (Bitcoin)": "BTC-USD",
         "ETHUSD (Ethereum)": "ETH-USD",
         "SOLUSD (Solana)": "SOL-USD",
         "DOGEUSD (Dogecoin)": "DOGE-USD"
     },
-    "Saham & Indeks 📈": {
+    "Saham & Indeks": {
         "AAPL (Apple)": "AAPL",
         "TSLA (Tesla)": "TSLA",
         "NVDA (NVIDIA)": "NVDA",
         "S&P 500": "^GSPC",
         "IHSG (Indonesia)": "^JKSE"
     },
-    "Komoditas & Forex 🌍": {
+    "Komoditas & Forex": {
         "XAUUSD (Emas)": "GC=F",
         "XAGUSD (Perak)": "SI=F",
         "USDIDR (Dolar-Rupiah)": "IDR=X",
@@ -43,10 +43,10 @@ simbol_yahoo = kategori_aset[pilih_kat][pilihan_user]
 # Mapping antara pilihan user dan kode yfinance
 map_interval = {
     "1 Menit": {"int": "1m", "per": "1d"},
-    "15 Menit": {"int": "15m", "per": "5d"},
-    "1 Jam": {"int": "1h", "per": "1mo"},
-    "Harian (1D)": {"int": "1d", "per": "2y"},
-    "Mingguan (1W)": {"int": "1wk", "per": "5y"}
+    "Harian (1D)": {"int": "15m", "per": "5d"},
+    "Mingguan (1W)": {"int": "1h", "per": "1mo"},
+    "Bulanan": {"int": "1d", "per": "2y"},
+    "Tahunan": {"int": "1wk", "per": "5y"}
 }
 
 pilih_tf = st.sidebar.selectbox("Pilih Timeframe (Interval):", list(map_interval.keys()), index=3)
