@@ -32,80 +32,90 @@ kategori_aset = {
     }
 }
 
-# 3. Sidebar dengan Pengelompokan
+# 3. Sidebar - Konfigurasi Aset & Waktu
 st.sidebar.header("Konfigurasi")
 
-# Pilih Kategori dulu
 pilih_kat = st.sidebar.selectbox("Pilih Kategori:", list(kategori_aset.keys()))
+pilihan_user = st.sidebar.selectbox("Pilih Aset Spesifik:", list(kategori_aset[pilih_kat].keys()))
+simbol_yahoo = kategori_aset[pilih_kat][pilihan_user]
 
-# Pilih Aset berdasarkan kategori yang dipilih
-daftar_pilihan = kategori_aset[pilih_kat]
-pilihan_user = st.sidebar.selectbox("Pilih Aset Spesifik:", list(daftar_pilihan.keys()))
-simbol_yahoo = daftar_pilihan[pilihan_user]
+# --- FITUR BARU: TIMEFRAME ---
+# Mapping antara pilihan user dan kode yfinance
+map_interval = {
+    "1 Menit": {"int": "1m", "per": "1d"},
+    "15 Menit": {"int": "15m", "per": "5d"},
+    "1 Jam": {"int": "1h", "per": "1mo"},
+    "Harian (1D)": {"int": "1d", "per": "2y"},
+    "Mingguan (1W)": {"int": "1wk", "per": "5y"}
+}
 
-tahun = st.sidebar.slider("Data Historis (Tahun):", 1, 10, 3)
+pilih_tf = st.sidebar.selectbox("Pilih Timeframe (Interval):", list(map_interval.keys()), index=3)
+interval_kode = map_interval[pilih_tf]["int"]
+period_kode = map_interval[pilih_tf]["per"]
 
-# 4. Ambil Data & Tambah Indikator RSI (Agar AI lebih pintar)
-data = yf.download(simbol_yahoo, period=f"{tahun}y", interval='1d')
+# 4. Ambil Data
+data = yf.download(simbol_yahoo, period=period_kode, interval=interval_kode)
+
 if isinstance(data.columns, pd.MultiIndex):
     data.columns = data.columns.droplevel(1)
 
-# Hitung RSI (Relative Strength Index)
+# Tambah Indikator RSI
 delta = data['Close'].diff()
 gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
 loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
 rs = gain / loss
 data['RSI'] = 100 - (100 / (1 + rs))
 
-# 5. Logika AI
+# 5. Logika AI (Hanya aktif jika data cukup banyak untuk belajar)
 data['Besok'] = data['Close'].shift(-1)
 data['Target'] = (data['Besok'] > data['Close']).astype(int)
-data = data.dropna()
+data_clean = data.dropna()
 
 features = ['Close', 'Open', 'High', 'Low', 'Volume', 'RSI']
-model = RandomForestClassifier(n_estimators=200, min_samples_split=50, random_state=1)
-model.fit(data[features], data['Target'])
+
+# Cek apakah data cukup untuk training
+if len(data_clean) > 50:
+    model = RandomForestClassifier(n_estimators=100, min_samples_split=50, random_state=1)
+    model.fit(data_clean[features], data_clean['Target'])
+    can_predict = True
+else:
+    can_predict = False
 
 # 6. Tampilan Dashboard
-st.markdown(f"### Menganalisis: **{pilihan_user}**")
+st.markdown(f"### Analisis: **{pilihan_user}** | Timeframe: **{pilih_tf}**")
 
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    # Grafik Candlestick
     fig = go.Figure(data=[go.Candlestick(
         x=data.index, open=data['Open'], high=data['High'],
         low=data['Low'], close=data['Close'], name="Harga"
     )])
-    
-    # Tambah garis RSI di bawah (Opsional, tapi keren)
     fig.update_layout(xaxis_rangeslider_visible=False, height=600, template="plotly_dark")
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
-    st.subheader("Statistik & Sinyal")
-    
+    st.subheader("Statistik Terkini")
     harga_akhir = data['Close'].iloc[-1]
-    perubahan = harga_akhir - data['Close'].iloc[-2]
-    persen = (perubahan / data['Close'].iloc[-2]) * 100
-    
-    st.metric(label="Harga Terakhir", value=f"{harga_akhir:,.2f}", delta=f"{persen:.2f}%")
+    st.metric(label=f"Harga ({pilih_tf})", value=f"{harga_akhir:,.2f}")
     
     st.write(f"**RSI (14):** {data['RSI'].iloc[-1]:.2f}")
-    if data['RSI'].iloc[-1] > 70: st.warning("Kondisi: Overbought (Jenuh Beli)")
-    elif data['RSI'].iloc[-1] < 30: st.info("Kondisi: Oversold (Jenuh Jual)")
     
     st.divider()
     
-    # Prediksi AI
-    df_akhir = data[features].iloc[-1:]
-    pred = model.predict(df_akhir)
-    prob = model.predict_proba(df_akhir)
-    
-    st.write("**Prediksi Arah Besok:**")
-    if pred[0] == 1:
-        st.success(f"NAIK 🚀 ({max(prob[0])*100:.1f}%)")
+    st.subheader("Prediksi AI")
+    if can_predict:
+        df_akhir = data[features].iloc[-1:]
+        pred = model.predict(df_akhir)
+        prob = model.predict_proba(df_akhir)
+        
+        # Penyesuaian bahasa prediksi berdasarkan timeframe
+        label_pred = "KANDEL BERIKUTNYA" if "Menit" in pilih_tf or "Jam" in pilih_tf else "BESOK"
+        
+        if pred[0] == 1:
+            st.success(f"PREDIKSI {label_pred}: NAIK 🚀")
+        else:
+            st.error(f"PREDIKSI {label_pred}: TURUN 📉")
+        st.write(f"Keyakinan: {max(prob[0])*100:.1f}%")
     else:
-        st.error(f"TURUN 📉 ({max(prob[0])*100:.1f}%)")
-
-st.caption("Data diperbarui otomatis dari Yahoo Finance. Prediksi dihitung secara real-time.")
+        st.warning("Data tidak cukup untuk melakukan prediksi pada timeframe ini.")
