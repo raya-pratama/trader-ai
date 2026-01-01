@@ -9,10 +9,21 @@ st.set_page_config(page_title="Trader AI", layout="wide")
 st.title("🤖 Trader Sentinel AI")
 
 # --- Sidebar ---
-symbol = st.sidebar.selectbox("Pilih Aset:", ["BTC-USD", "ETH-USD", "GC=F", "IDR=X"])
+daftar_aset = {
+    "XAUUSD (Emas)": "GC=F",
+    "BTCUSD (Bitcoin)": "BTC-USD",
+    "ETHUSD (Ethereum)": "ETH-USD",
+    "USDIDR (Dolar ke Rupiah)": "IDR=X"
+}
+
+# --- 2. Tampilkan di Sidebar ---
+# User milih nama di layar, tapi variabel 'pilihan' akan berisi simbol aslinya
+pilihan_nama = st.sidebar.selectbox("Pilih Aset:", list(daftar_aset.keys()))
+symbol = daftar_aset[pilihan_nama]
+
 period = st.sidebar.slider("Data Historis (Tahun):", 1, 5, 2)
 
-# --- 1. Ambil Data ---
+# --- 3. Ambil Data (Gunakan variabel 'symbol') ---
 data = yf.download(symbol, period=f"{period}y", interval='1d')
 
 # Perbaikan Multi-index
