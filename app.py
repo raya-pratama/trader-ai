@@ -33,7 +33,7 @@ kategori_aset = {
 }
 
 # 3. Sidebar - Konfigurasi Aset & Waktu
-st.sidebar.header("Konfigurasi")
+st.sidebar.header("Pilih")
 
 pilih_kat = st.sidebar.selectbox("Pilih Kategori:", list(kategori_aset.keys()))
 pilihan_user = st.sidebar.selectbox("Pilih Aset Spesifik:", list(kategori_aset[pilih_kat].keys()))
@@ -113,9 +113,9 @@ with col2:
         label_pred = "KANDEL BERIKUTNYA" if "Menit" in pilih_tf or "Jam" in pilih_tf else "BESOK"
         
         if pred[0] == 1:
-            st.success(f"PREDIKSI {label_pred}: NAIK 🚀")
+            st.success(f"PREDIKSI {label_pred}: NAIK")
         else:
-            st.error(f"PREDIKSI {label_pred}: TURUN 📉")
+            st.error(f"PREDIKSI {label_pred}: TURUN")
         st.write(f"Keyakinan: {max(prob[0])*100:.1f}%")
     else:
         st.warning("Data tidak cukup untuk melakukan prediksi pada timeframe ini.")
