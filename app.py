@@ -43,7 +43,7 @@ model.fit(data[features], data['Target'])
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    st.subheader(f"Grafik Harga {symbol}")
+    st.subheader(f"Grafik Harga {pilihan_nama}")
     fig = go.Figure(data=[go.Candlestick(x=data.index,
                 open=data['Open'], high=data['High'],
                 low=data['Low'], close=data['Close'])])
