@@ -42,11 +42,11 @@ simbol_yahoo = kategori_aset[pilih_kat][pilihan_user]
 # --- FITUR BARU: TIMEFRAME ---
 # Mapping antara pilihan user dan kode yfinance
 map_interval = {
-    "1 Menit": {"int": "1m", "per": "7d"},
-    "Harian (1D)": {"int": "15m", "per": "180d"},
-    "Mingguan (1W)": {"int": "1h", "per": "12mo"},
-    "Bulanan": {"int": "1d", "per": "5y"},
-    "Tahunan": {"int": "1wk", "per": "10y"}
+    "1 Menit": {"int": "1m", "per": "1d"},
+    "Harian (1D)": {"int": "15m", "per": "7d"},
+    "Mingguan (1W)": {"int": "1h", "per": "1mo"},
+    "Bulanan": {"int": "1d", "per": "2y"},
+    "Tahunan": {"int": "1wk", "per": "5y"}
 }
 
 pilih_tf = st.sidebar.selectbox("Pilih Timeframe (Interval):", list(map_interval.keys()), index=3)
