@@ -39,8 +39,8 @@ pilih_kat = st.sidebar.selectbox("Pilih Kategori:", list(kategori_aset.keys()))
 pilihan_user = st.sidebar.selectbox("Pilih Aset Spesifik:", list(kategori_aset[pilih_kat].keys()))
 simbol_yahoo = kategori_aset[pilih_kat][pilihan_user]
 
-# --- FITUR BARU: TIMEFRAME ---
-# Mapping antara pilihan user dan kode yfinance
+# --- TIMEFRAME ---
+
 map_interval = {
     "1 Menit": {"int": "1m", "per": "1d"},
     "Harian (1D)": {"int": "15m", "per": "7d"},
@@ -66,7 +66,7 @@ loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
 rs = gain / loss
 data['RSI'] = 100 - (100 / (1 + rs))
 
-# 5. Logika AI (Hanya aktif jika data cukup banyak untuk belajar)
+# 5. Logika AI
 data['Besok'] = data['Close'].shift(-1)
 data['Target'] = (data['Besok'] > data['Close']).astype(int)
 data_clean = data.dropna()
