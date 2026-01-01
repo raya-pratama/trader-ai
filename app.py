@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="Trader AI", layout="wide")
 st.title("🤖 Trader Sentinel AI")
 
-# --- Sidebar ---
+# --- 1. Sidebar & Pilihan Aset ---
 daftar_aset = {
     "XAUUSD (Emas)": "GC=F",
     "BTCUSD (Bitcoin)": "BTC-USD",
@@ -16,21 +16,17 @@ daftar_aset = {
     "USDIDR (Dolar ke Rupiah)": "IDR=X"
 }
 
-# --- 2. Tampilkan di Sidebar ---
-# User milih nama di layar, tapi variabel 'pilihan' akan berisi simbol aslinya
 pilihan_nama = st.sidebar.selectbox("Pilih Aset:", list(daftar_aset.keys()))
 symbol = daftar_aset[pilihan_nama]
-
 period = st.sidebar.slider("Data Historis (Tahun):", 1, 5, 2)
 
-# --- 3. Ambil Data (Gunakan variabel 'symbol') ---
+# --- 2. Ambil Data ---
 data = yf.download(symbol, period=f"{period}y", interval='1d')
 
-# Perbaikan Multi-index
 if isinstance(data.columns, pd.MultiIndex):
     data.columns = data.columns.droplevel(1)
 
-# --- 2. Logika AI ---
+# --- 3. Logika AI ---
 data['Besok'] = data['Close'].shift(-1)
 data['Target'] = (data['Besok'] > data['Close']).astype(int)
 data = data.dropna()
@@ -39,30 +35,45 @@ features = ['Close', 'Open', 'High', 'Low', 'Volume']
 model = RandomForestClassifier(n_estimators=100, min_samples_split=100, random_state=1)
 model.fit(data[features], data['Target'])
 
-# --- 3. Tampilan ---
+# --- 4. Tampilan Dashboard ---
 col1, col2 = st.columns([2, 1])
 
 with col1:
-   st.subheader(f"Grafik Harga {pilihan_nama}") 
+    st.subheader(f"Grafik Harga {pilihan_nama}") 
     
-    fig = go.Figure(data=[go.Candlestick(x=data.index,
-                open=data['Open'], high=data['High'],
-                low=data['Low'], close=data['Close'])])
+    fig = go.Figure(data=[go.Candlestick(
+        x=data.index,
+        open=data['Open'], 
+        high=data['High'],
+        low=data['Low'], 
+        close=data['Close']
+    )])
     
-    fig.update_layout(xaxis_rangeslider_visible=False) 
+    fig.update_layout(
+        xaxis_rangeslider_visible=False,
+        margin=dict(l=0, r=0, t=30, b=0)
+    )
     
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
     st.subheader("Hasil Analisis AI")
+    
+    # Harga Terakhir
+    harga_skrg = data['Close'].iloc[-1]
+    st.metric(label="Harga Terakhir", value=f"{harga_skrg:,.2f}")
+    
+    st.divider()
+    
+    # Prediksi
     data_terakhir = data[features].iloc[-1:]
     prediksi = model.predict(data_terakhir)
-    probabilitas = model.predict_proba(data_terakhir)
+    prob = model.predict_proba(data_terakhir)
     
     if prediksi[0] == 1:
         st.success("PREDIKSI BESOK: NAIK 🚀")
     else:
         st.error("PREDIKSI BESOK: TURUN 📉")
         
-    st.write(f"Keyakinan Model: {max(probabilitas[0])*100:.2f}%")
-    st.info("Catatan: Ini prediksi teknikal, bukan saran finansial.")
+    st.write(f"Keyakinan Model: {max(prob[0])*100:.2f}%")
+    st.info("Berdasarkan pola teknikal harian.")
